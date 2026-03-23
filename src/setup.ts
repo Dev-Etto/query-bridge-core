@@ -2,7 +2,7 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { bridge } from './providers/google-bridge';
 
-async function initSpreadsheet() {
+export async function setupSpreadsheet() {
   logger.info('🛠️ Iniciando Setup da Planilha QueryBridge...');
 
   try {
@@ -40,7 +40,11 @@ async function initSpreadsheet() {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error('❌ Erro de conexão com o Bridge durante o Setup:', message);
+    throw err; // Repassa o erro para o index.ts tratar
   }
 }
 
-initSpreadsheet();
+// Se o arquivo for executado diretamente via terminal
+if (import.meta.main) {
+  setupSpreadsheet();
+}

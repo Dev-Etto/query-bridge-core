@@ -62,4 +62,4 @@ jobs:
         run: bun install
 
       - name: 🏗️ Verify Entrypoint
-        run: bun build ./src/index.ts --target bun --silent > /dev/null
+        run: bun build src/index.ts --target bun

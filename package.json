@@ -1,6 +1,6 @@
 {
   "name": "query-bridge-core",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "scripts": {
@@ -11,7 +11,8 @@
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'Testing placeholder' && exit 0"
+    "test": "echo 'Testing placeholder' && exit 0",
+    "verify-entrypoint": "bun build src/index.ts --target bun"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

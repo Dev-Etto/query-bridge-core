@@ -1,4 +1,4 @@
-FROM oven/bun:latest-slim
+FROM oven/bun:slim
 
 WORKDIR /app
 
@@ -6,8 +6,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV TZ=America/Sao_Paulo
 
-# Instala o fuso horário para o sistema (Slim images podem precisar)
-RUN apt-get update && apt-get install -y tzdata && \
+# Instala o fuso horário para o sistema e dependências nativas para o driver 'pg'
+RUN apt-get update && apt-get install -y tzdata libpq-dev && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 

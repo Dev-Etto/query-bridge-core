@@ -1,0 +1,31 @@
+{
+  "name": "query-bridge-core",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "run": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "setup": "bun src/setup.ts",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'Testing placeholder' && exit 0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^25.5.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@adonisjs/core": "^7.1.1",
+    "@adonisjs/lucid": "^22.2.0",
+    "axios": "^1.13.6",
+    "luxon": "^3.7.2",
+    "pg": "^8.20.0"
+  }
+}

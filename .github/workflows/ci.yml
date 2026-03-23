@@ -1,0 +1,67 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
+  push:
+    branches:
+      - develop
+      - staging
+      - main
+
+jobs:
+  validate:
+    name: Code Quality & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🧅 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock', '**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📥 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🎨 Lint Check (Biome)
+        run: bun run lint
+
+      - name: 🛡️ Type Check (TSC)
+        run: bun run typecheck
+
+      - name: 🧪 Unit Tests
+        run: bun run test
+
+  build:
+    name: Build & Artifact Verification
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🧅 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📥 Install Dependencies
+        run: bun install --frozen-lockfile
+
+      # Simulação de build para verificar integridade se necessário.
+      # Para um worker em Bun, garantimos que o entrypoint está acessível.
+      - name: 🏗️ Verify Entrypoint
+        run: bun build ./src/index.ts --target bun --silent > /dev/null

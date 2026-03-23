@@ -9,7 +9,7 @@ const server = Bun.serve({
     const url = new URL(req.url);
 
     if (url.pathname === '/') {
-        return new Response('QueryBridge Core is Online. Use /run or /setup', { status: 200 });
+      return new Response('QueryBridge Core is Online. Use /run or /setup', { status: 200 });
     }
 
     if (url.pathname === '/run') {
@@ -26,14 +26,14 @@ const server = Bun.serve({
     }
 
     if (url.pathname === '/setup') {
-        try {
-            await setupSpreadsheet();
-            return new Response('Setup Complete - Planilha inicializada!', { status: 200 });
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : String(err);
-            logger.error('❌ Erro crítico no /setup:', message);
-            return new Response(`Setup Error: ${message}`, { status: 500 });
-        }
+      try {
+        await setupSpreadsheet();
+        return new Response('Setup Complete - Planilha inicializada!', { status: 200 });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error('❌ Erro crítico no /setup:', message);
+        return new Response(`Setup Error: ${message}`, { status: 500 });
+      }
     }
 
     return new Response('404 Not Found', { status: 404 });

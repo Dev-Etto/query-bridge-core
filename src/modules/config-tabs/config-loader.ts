@@ -1,6 +1,6 @@
 import { logger } from '../../config/logger';
 import { type JobConfig, JobStatus } from '../../core/contracts/config.contract';
-import { bridge, type SheetValue } from '../../providers/google-bridge';
+import { type SheetValue, bridge } from '../../providers/google-bridge';
 
 export const ConfigLoader = {
   /**

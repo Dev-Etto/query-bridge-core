@@ -1,7 +1,7 @@
 import { logger } from '../../config/logger';
 import type { JobConfig, SyncResult } from '../../core/contracts/config.contract';
 import { executeRawQuery } from '../../database';
-import { bridge, type SheetValue } from '../../providers/google-bridge';
+import { type SheetValue, bridge } from '../../providers/google-bridge';
 
 export class ReportProcessor {
   /**

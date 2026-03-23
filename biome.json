@@ -14,12 +14,8 @@
     "lineWidth": 100,
     "attributePosition": "auto"
   },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
+  "organizeImports": {
+    "enabled": true
   },
   "linter": {
     "enabled": true,

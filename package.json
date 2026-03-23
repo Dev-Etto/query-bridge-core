@@ -12,7 +12,7 @@
     "lint:fix": "biome check --write src",
     "typecheck": "tsc --noEmit",
     "test": "echo 'Testing placeholder' && exit 0",
-    "verify-entrypoint": "bun build src/index.ts --target bun"
+    "verify-entrypoint": "bun build src/index.ts --target bun --external '*'"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

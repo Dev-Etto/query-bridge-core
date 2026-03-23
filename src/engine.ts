@@ -17,11 +17,10 @@ export async function runQueryBridge(force = false) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error('❌ Falha ao carregar configurações da planilha:', message);
-    return;
+    throw error;
   }
 
   const processor = new ReportProcessor();
-
   const jobsToRun = force ? jobs : jobs.filter((job) => FrequencyHandler.shouldRun(job.frequency));
 
   logger.info(
@@ -33,15 +32,24 @@ export async function runQueryBridge(force = false) {
     return;
   }
 
-  for (const job of jobsToRun) {
-    const result = await processor.process(job);
+  // Processamento Paralelo
+  const results = await Promise.allSettled(
+    jobsToRun.map(async (job) => {
+      try {
+        const result = await processor.process(job);
+        if (result.success) {
+          logger.info(`✅ [${result.jobName}] Sync OK: ${result.rowsProcessed} linhas.`);
+        } else {
+          logger.error(`❌ [${result.jobName}] Falha: ${result.error}`);
+        }
+        return result;
+      } catch (err) {
+        logger.error(`💥 [${job.targetTab}] Erro fatal no processamento:`, err);
+        throw err;
+      }
+    })
+  );
 
-    if (result.success) {
-      logger.info(`✅ [${result.jobName}] Sync OK: ${result.rowsProcessed} linhas.`);
-    } else {
-      logger.error(`❌ [${result.jobName}] Falha: ${result.error}`);
-    }
-  }
-
-  logger.info('✨ Ciclo finalizado.');
+  const successful = results.filter((r) => r.status === 'fulfilled').length;
+  logger.info(`✨ Ciclo finalizado. Sucessos: ${successful}/${jobsToRun.length}`);
 }

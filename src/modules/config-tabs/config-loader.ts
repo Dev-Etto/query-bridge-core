@@ -38,30 +38,38 @@ export const ConfigLoader = {
 
     return rows
       .slice(1)
-      .map((row: SheetValue[]) => {
+      .map((row: SheetValue[], index) => {
         const getVal = (i: number, defaultVal = '') => {
           const val = i !== -1 ? String(row[i] || '').trim() : '';
-          return val || defaultVal;
+          return val.replace(/^"|"$/g, '').trim() || defaultVal;
         };
 
+        const jobName = getVal(idx.targetTab, `Linha ${index + 2}`);
         const rawStatus = getVal(idx.status, JobStatus.INATIVO).toUpperCase();
-        const status = Object.values(JobStatus).includes(rawStatus as JobStatus)
-          ? (rawStatus as JobStatus)
-          : JobStatus.INATIVO;
+
+        const status =
+          rawStatus === 'ATIVO' || rawStatus === 'ACTIVE' ? JobStatus.ATIVO : JobStatus.INATIVO;
 
         const rawFreq = getVal(idx.frequency, 'M1').toUpperCase();
         const isValidFreq = /^([MHD]|MM)(\d+)$/.test(rawFreq);
         const frequency = isValidFreq ? rawFreq : 'M1';
 
-        const job: JobConfig = {
-          query: getVal(idx.query),
-          targetTab: getVal(idx.targetTab),
+        const query = getVal(idx.query);
+        const targetTab = getVal(idx.targetTab);
+
+        if (!query || !targetTab) {
+          logger.debug(`[ConfigLoader] Linha ${index + 2} ignorada: Dados incompletos.`);
+        } else if (status !== JobStatus.ATIVO) {
+          logger.debug(`[ConfigLoader] [${jobName}] ignorado: Status ${rawStatus}.`);
+        }
+
+        return {
+          query,
+          targetTab,
           targetRange: getVal(idx.targetRange, 'A1'),
           status,
           frequency,
-        };
-
-        return job;
+        } as JobConfig;
       })
       .filter((job) => job.status === JobStatus.ATIVO && job.targetTab && job.query);
   },

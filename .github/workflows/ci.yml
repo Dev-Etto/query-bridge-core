@@ -34,7 +34,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: 📥 Install Dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: 🎨 Lint Check (Biome)
         run: bun run lint
@@ -59,9 +59,7 @@ jobs:
           bun-version: latest
 
       - name: 📥 Install Dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
-      # Simulação de build para verificar integridade se necessário.
-      # Para um worker em Bun, garantimos que o entrypoint está acessível.
       - name: 🏗️ Verify Entrypoint
         run: bun build ./src/index.ts --target bun --silent > /dev/null

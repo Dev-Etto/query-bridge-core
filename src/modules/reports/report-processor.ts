@@ -3,7 +3,7 @@ import type { JobConfig, SyncResult } from '../../core/contracts/config.contract
 import { executeRawQuery } from '../../database';
 import { type SheetValue, bridge } from '../../providers/google-bridge';
 
-const BATCH_SIZE = 5000;
+const BATCH_SIZE = 2000;
 
 export class ReportProcessor {
   /**
@@ -14,44 +14,41 @@ export class ReportProcessor {
     logger.info(`🚀 [${jobName}] Processando relatório...`);
 
     let totalRowsProcessed = 0;
-    let totalCellsProcessed = 0;
     let headers: string[] = [];
     let isFirstBatch = true;
 
     try {
+      const queryStart = Date.now();
       const rows = await executeRawQuery<Record<string, SheetValue>>(job.query);
+      const queryDuration = ((Date.now() - queryStart) / 1000).toFixed(1);
 
       const rowsCount = rows.length;
       if (rowsCount === 0) {
-        logger.warn(`⚠️ [${jobName}] Query retornou zero resultados. Ignorando atualização.`);
+        logger.warn(`⚠️ [${jobName}] Query retornou zero resultados. (${queryDuration}s)`);
         return { success: true, jobName, rowsProcessed: 0 };
       }
 
       headers = Object.keys(rows[0] as object);
       const totalCols = headers.length;
 
-      logger.debug(
-        `[${jobName}] Volumetria total: ${rowsCount} linhas x ${totalCols} colunas (${rowsCount * totalCols} células).`
+      logger.info(
+        `📊 [${jobName}] Query finalizada: ${rowsCount} linhas e ${totalCols} colunas (${queryDuration}s).`
       );
 
-      if (rowsCount * totalCols > 100000) {
-        logger.warn(
-          `⚠️ [${jobName}] ATENÇÃO: Relatório muito grande (${rowsCount * totalCols} células). Pode ser lento.`
-        );
-      }
-
       // Process in batches
+      const totalBatches = Math.ceil(rowsCount / BATCH_SIZE);
       for (let i = 0; i < rowsCount; i += BATCH_SIZE) {
+        const batchStart = Date.now();
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
         const batchRows = rows.slice(i, i + BATCH_SIZE);
         const batchValues: SheetValue[][] = batchRows.map((r: Record<string, SheetValue>) =>
           headers.map((h) => r[h] ?? null)
         );
 
         const currentBatchRowsCount = batchRows.length;
-        const currentBatchCellsCount = currentBatchRowsCount * totalCols;
 
         logger.debug(
-          `[${jobName}] Processando lote ${Math.floor(i / BATCH_SIZE) + 1}: ${currentBatchRowsCount} linhas (${currentBatchCellsCount} células).`
+          `[${jobName}] Lote ${batchNumber}/${totalBatches}: Enviando ${currentBatchRowsCount} linhas...`
         );
 
         if (isFirstBatch) {
@@ -65,7 +62,11 @@ export class ReportProcessor {
         }
 
         totalRowsProcessed += currentBatchRowsCount;
-        totalCellsProcessed += currentBatchCellsCount;
+        const batchDuration = ((Date.now() - batchStart) / 1000).toFixed(1);
+
+        logger.info(
+          `📦 [${jobName}] Lote ${batchNumber}/${totalBatches} concluído | Progresso: ${totalRowsProcessed}/${rowsCount} (${batchDuration}s)`
+        );
       }
 
       logger.info(

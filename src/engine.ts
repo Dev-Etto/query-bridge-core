@@ -32,39 +32,37 @@ export async function runQueryBridge(force = false) {
     return;
   }
 
-  // Processamento Paralelo
+  // Processamento Sequencial (para evitar OOM em relatórios grandes como Candidatos e Hunter)
   const total = jobsToRun.length;
   let finished = 0;
   let failed = 0;
 
-  logger.info(`🚀 [INÍCIO] Iniciando processamento paralelo de ${total} relatórios...`);
+  logger.info(`🚀 [INÍCIO] Iniciando processamento sequencial de ${total} relatórios...`);
 
-  const results = await Promise.allSettled(
-    jobsToRun.map(async (job) => {
-      const start = Date.now();
-      try {
-        logger.info(`⏳ [PROCESSANDO] ${job.targetTab}...`);
-        const result = await processor.process(job);
+  for (const [i, job] of jobsToRun.entries()) {
+    const start = Date.now();
+    try {
+      logger.info(`⏳ [${i + 1}/${total}] [PROCESSANDO] ${job.targetTab}...`);
+      const result = await processor.process(job);
 
-        const duration = ((Date.now() - start) / 1000).toFixed(1);
+      const duration = ((Date.now() - start) / 1000).toFixed(1);
 
-        if (result.success) {
-          finished++;
-          logger.info(
-            `✅ [CONCLUÍDO] ${job.targetTab} | ${result.rowsProcessed} linhas | ${duration}s`
-          );
-        } else {
-          failed++;
-          logger.error(`❌ [FALHA] ${job.targetTab} | Erro: ${result.error} | ${duration}s`);
-        }
-        return result;
-      } catch (err) {
+      if (result.success) {
+        finished++;
+        logger.info(
+          `✅ [${i + 1}/${total}] [CONCLUÍDO] ${job.targetTab} | ${result.rowsProcessed} linhas | ${duration}s`
+        );
+      } else {
         failed++;
-        logger.error(`💥 [ERRO FATAL] ${job.targetTab}:`, err);
-        throw err;
+        logger.error(
+          `❌ [${i + 1}/${total}] [FALHA] ${job.targetTab} | Erro: ${result.error} | ${duration}s`
+        );
       }
-    })
-  );
+    } catch (err) {
+      failed++;
+      logger.error(`💥 [${i + 1}/${total}] [ERRO FATAL] ${job.targetTab}:`, err);
+    }
+  }
 
   logger.info(
     `📊 [RESUMO] Ciclo finalizado: ✅ ${finished} Sucessos | ❌ ${failed} Falhas | 📁 ${total} Total`

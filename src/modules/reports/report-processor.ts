@@ -14,7 +14,8 @@ export class ReportProcessor {
     try {
       const rows = await executeRawQuery<Record<string, SheetValue>>(job.query);
 
-      if (rows.length === 0) {
+      const rowsCount = rows.length;
+      if (rowsCount === 0) {
         logger.warn(`⚠️ [${jobName}] Query retornou zero resultados. Ignorando atualização.`);
         return { success: true, jobName, rowsProcessed: 0 };
       }
@@ -25,12 +26,23 @@ export class ReportProcessor {
         ...rows.map((r: Record<string, SheetValue>) => headers.map((h) => r[h] ?? null)),
       ];
 
+      const cellCount = rowsCount * headers.length;
+      logger.debug(
+        `[${jobName}] Volumetria: ${rowsCount} linhas x ${headers.length} colunas (${cellCount} células).`
+      );
+
+      if (cellCount > 100000) {
+        logger.warn(
+          `⚠️ [${jobName}] ATENÇÃO: Relatório muito grande (${cellCount} células). Pode ser lento.`
+        );
+      }
+
       await bridge.updateValues(job.targetTab, job.targetRange || 'A1', valuesToPush);
 
       return {
         success: true,
         jobName,
-        rowsProcessed: rows.length,
+        rowsProcessed: rowsCount,
       };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);

@@ -33,23 +33,40 @@ export async function runQueryBridge(force = false) {
   }
 
   // Processamento Paralelo
+  const total = jobsToRun.length;
+  let finished = 0;
+  let failed = 0;
+
+  logger.info(`🚀 [INÍCIO] Iniciando processamento paralelo de ${total} relatórios...`);
+
   const results = await Promise.allSettled(
     jobsToRun.map(async (job) => {
+      const start = Date.now();
       try {
+        logger.info(`⏳ [PROCESSANDO] ${job.targetTab}...`);
         const result = await processor.process(job);
+
+        const duration = ((Date.now() - start) / 1000).toFixed(1);
+
         if (result.success) {
-          logger.info(`✅ [${result.jobName}] Sync OK: ${result.rowsProcessed} linhas.`);
+          finished++;
+          logger.info(
+            `✅ [CONCLUÍDO] ${job.targetTab} | ${result.rowsProcessed} linhas | ${duration}s`
+          );
         } else {
-          logger.error(`❌ [${result.jobName}] Falha: ${result.error}`);
+          failed++;
+          logger.error(`❌ [FALHA] ${job.targetTab} | Erro: ${result.error} | ${duration}s`);
         }
         return result;
       } catch (err) {
-        logger.error(`💥 [${job.targetTab}] Erro fatal no processamento:`, err);
+        failed++;
+        logger.error(`💥 [ERRO FATAL] ${job.targetTab}:`, err);
         throw err;
       }
     })
   );
 
-  const successful = results.filter((r) => r.status === 'fulfilled').length;
-  logger.info(`✨ Ciclo finalizado. Sucessos: ${successful}/${jobsToRun.length}`);
+  logger.info(
+    `📊 [RESUMO] Ciclo finalizado: ✅ ${finished} Sucessos | ❌ ${failed} Falhas | 📁 ${total} Total`
+  );
 }

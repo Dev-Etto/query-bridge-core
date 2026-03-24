@@ -107,11 +107,16 @@ export async function streamRawQuery<T = Record<string, unknown>>(
     await trx.rawQuery(`DECLARE ${cursorName} CURSOR FOR ${query}`);
 
     while (true) {
-      const result = await trx.rawQuery(`FETCH ${batchSize} FROM ${cursorName}`);
+      logger.debug(`[Database] Buscando próximo lote de ${batchSize} linhas via cursor...`);
+      const result = await trx.rawQuery(`FETCH ${batchSize} FROM ${cursorName}`).timeout(60000, { cancel: true });
       const rows = (result.rows || result) as T[];
 
-      if (rows.length === 0) break;
+      if (rows.length === 0) {
+        logger.debug('[Database] Cursor finalizado (0 linhas retornadas).');
+        break;
+      }
 
+      logger.debug(`[Database] Enviando lote de ${rows.length} para processamento...`);
       await onBatch(rows);
       totalRows += rows.length;
     }

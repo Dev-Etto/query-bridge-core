@@ -40,7 +40,7 @@ export class GoogleBridgeClient {
       const securePayload = { ...payload, secret: env.BRIDGE_SECRET };
 
       const response = await axios.post(this.baseUrl, securePayload, {
-        timeout: 45000,
+        timeout: env.GOOGLE_TIMEOUT,
       });
 
       if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
@@ -59,7 +59,9 @@ export class GoogleBridgeClient {
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         if (error.code === 'ECONNABORTED') {
-          throw new Error('❌ Erro: Conexão com o Google excedeu o tempo limite (45s).');
+          throw new Error(
+            `❌ Erro: Conexão com o Google excedeu o tempo limite (${env.GOOGLE_TIMEOUT / 1000}s).`
+          );
         }
       }
       throw error;

@@ -6,6 +6,7 @@ export interface Env {
   BATCH_SIZE: number;
   PORT: number;
   NODE_ENV: 'development' | 'production' | 'test';
+  GOOGLE_TIMEOUT: number;
 }
 
 class EnvManager {
@@ -21,6 +22,7 @@ class EnvManager {
       BRIDGE_SECRET: process.env.BRIDGE_SECRET || 'changeme',
       PORT: Number(process.env.PORT) || 8080,
       NODE_ENV: (process.env.NODE_ENV as Env['NODE_ENV']) || 'development',
+      GOOGLE_TIMEOUT: Number(process.env.GOOGLE_TIMEOUT) || 120000,
     };
   }
 

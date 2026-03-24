@@ -3,6 +3,7 @@ export interface Env {
   SPREADSHEET_ID: string;
   APPS_SCRIPT_URL: string;
   BRIDGE_SECRET: string;
+  BATCH_SIZE: number;
   PORT: number;
   NODE_ENV: 'development' | 'production' | 'test';
 }
@@ -13,6 +14,7 @@ class EnvManager {
 
   private constructor() {
     this._env = {
+      BATCH_SIZE: Number(process.env.BATCH_SIZE) || 500,
       DATABASE_URL: this.getEnv('DATABASE_URL'),
       SPREADSHEET_ID: this.getEnv('SPREADSHEET_ID'),
       APPS_SCRIPT_URL: this.getEnv('APPS_SCRIPT_URL'),

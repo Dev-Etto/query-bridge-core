@@ -1,9 +1,8 @@
+import { env } from '../../config/env';
 import { logger } from '../../config/logger';
 import type { JobConfig, SyncResult } from '../../core/contracts/config.contract';
-import { executeRawQuery, streamRawQuery } from '../../database';
+import { streamRawQuery } from '../../database';
 import { type SheetValue, bridge } from '../../providers/google-bridge';
-
-const BATCH_SIZE = 2000;
 
 export class ReportProcessor {
   /**
@@ -22,7 +21,7 @@ export class ReportProcessor {
 
       totalRowsProcessed = await streamRawQuery<Record<string, SheetValue>>(
         job.query,
-        BATCH_SIZE,
+        env.BATCH_SIZE,
         async (batchRows: Record<string, SheetValue>[]) => {
           const batchStart = Date.now();
 

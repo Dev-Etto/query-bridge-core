@@ -6,6 +6,7 @@
   "scripts": {
     "run": "bun src/index.ts",
     "dev": "bun --watch src/index.ts",
+    "deploy": "gcloud run deploy query-bridge-core --source . --region southamerica-east1 --memory 1Gi --allow-unauthenticated",
     "start": "bun src/index.ts",
     "setup": "bun src/setup.ts",
     "lint": "biome check src",

@@ -2,7 +2,6 @@ import { Database } from '@adonisjs/lucid/database';
 import { env } from './config/env';
 import { logger } from './config/logger';
 
-// Interface mínima para o logger exigida pelo Lucid
 interface LucidLogger {
   log: (level: string, messageOrObj: unknown, msg?: string) => void;
   debug: (messageOrObj: unknown, msg?: string) => void;
@@ -13,7 +12,6 @@ interface LucidLogger {
   fatal: (messageOrObj: unknown, msg?: string) => void;
 }
 
-// Interface mínima para o emitter exigida pelo Lucid
 interface LucidEmitter {
   on: (event: string, callback: (data: unknown) => void) => void;
   emit: (event: string, data: unknown) => void;
@@ -88,6 +86,41 @@ export async function executeRawQuery<T = Record<string, unknown>>(query: string
       throw new Error('A consulta ao banco de dados demorou demais e foi interrompida.');
     }
     logger.error(`[Database Error] Falha SQL: ${message}`);
+    throw error;
+  }
+}
+
+/**
+ * Helper para executar SQL Puro via Cursor (Streaming Manual)
+ * Útil para relatórios gigantes que não cabem na memória.
+ */
+export async function streamRawQuery<T = Record<string, unknown>>(
+  query: string,
+  batchSize: number,
+  onBatch: (rows: T[]) => Promise<void>
+): Promise<number> {
+  const trx = await db.transaction();
+  const cursorName = `cursor_${Date.now()}`;
+  let totalRows = 0;
+
+  try {
+    await trx.rawQuery(`DECLARE ${cursorName} CURSOR FOR ${query}`);
+
+    while (true) {
+      const result = await trx.rawQuery(`FETCH ${batchSize} FROM ${cursorName}`);
+      const rows = (result.rows || result) as T[];
+
+      if (rows.length === 0) break;
+
+      await onBatch(rows);
+      totalRows += rows.length;
+    }
+
+    await trx.commit();
+    return totalRows;
+  } catch (error) {
+    await trx.rollback();
+    logger.error(`[Stream Error] Falha no processamento via Cursor: ${String(error)}`);
     throw error;
   }
 }

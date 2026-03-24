@@ -9,7 +9,7 @@
  * 5. Configure: "Quem pode acessar: Qualquer pessoa" (Anyone).
  * 6. Copie a URL gerada e coloque na variável APPS_SCRIPT_URL do seu .env.
  */
-const SECRET_TOKEN = "MINHA_CHAVE"; // <--- COLOQUE O MESMO DO .ENV AQUI
+const SECRET_TOKEN = "MINHA_CHAVE_SUPER_SECRETA_123"; // <--- COLOQUE O MESMO DO .ENV AQUI
 
 function doPost(e) {
   try {
@@ -28,6 +28,8 @@ function doPost(e) {
         return getValues(ss, params.tab, params.range);
       case "UPDATE_VALUES":
         return updateValues(ss, params.tab, params.values);
+      case "APPEND_VALUES":
+        return appendValues(ss, params.tab, params.values);
       default:
         return createResponse(false, "Ação desconhecida");
     }
@@ -77,6 +79,36 @@ function updateValues(ss, tabName, values) {
 
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, cols);
+  return createResponse(true);
+}
+
+function appendValues(ss, tabName, values) {
+  let sheet = ss.getSheetByName(tabName);
+  if (!sheet) sheet = ss.insertSheet(tabName);
+
+  const lastRow = sheet.getLastRow();
+  const rows = values.length;
+  const cols = values[0].length;
+  const range = sheet.getRange(lastRow + 1, 1, rows, cols);
+  range.setValues(values);
+
+  range
+    .setVerticalAlignment("middle")
+    .setHorizontalAlignment("center")
+    .setFontFamily("Arial")
+    .setFontSize(10);
+
+  range.setBorder(
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    "#e0e0e0",
+    SpreadsheetApp.BorderStyle.SOLID,
+  );
+
   return createResponse(true);
 }
 

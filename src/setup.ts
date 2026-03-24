@@ -40,11 +40,10 @@ export async function setupSpreadsheet() {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error('❌ Erro de conexão com o Bridge durante o Setup:', message);
-    throw err; // Repassa o erro para o index.ts tratar
+    throw err;
   }
 }
 
-// Se o arquivo for executado diretamente via terminal
 if (import.meta.main) {
   setupSpreadsheet();
 }

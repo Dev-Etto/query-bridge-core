@@ -5,75 +5,70 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Google Sheets](https://img.shields.io/badge/Google%20Sheets-34A853?style=for-the-badge&logo=google-sheets&logoColor=white)](https://www.google.com/sheets/about/)
 
-**QueryBridge Core** é um motor de sincronização de dados de alto desempenho que conecta bancos de dados **PostgreSQL** diretamente ao **Google Sheets**. Ele permite transformar consultas SQL complexas em relatórios vivos, formatados como Tabelas Nativas do Google, com agendamento dinâmico e configuração simplificada via planilha.
+**QueryBridge Core** é um motor de sincronização de dados de alta performance projetado para conectar instâncias **PostgreSQL** diretamente ao **Google Sheets**. Ele transforma consultas SQL complexas em relatórios dinâmicos, formatados como Tabelas Nativas do Google, utilizando uma arquitetura escalável que suporta milhões de linhas através de **Streaming via Cursor**.
 
 ---
 
 ## 🛠️ Tecnologias e Stack
 
-- **Runtime:** [Bun](https://bun.sh) (Performance extrema e substituto do Node.js).
-- **Linguagem:** TypeScript (Tipagem estrita e segurança).
-- **Banco de Dados:** PostgreSQL via [Adonis Lucid (Knex)](https://lucid.adonisjs.com/).
-- **Bridge:** Google Apps Script (Interface nativa com a API do Sheets) [Código disponível em `./google-apps-script/Code.gs`](./google-apps-script/Code.gs).
-- **Utilitários:** Axios (HTTP), Luxon (Datas), Biome (Linting & Formatação).
+- **Runtime:** [Bun](https://bun.sh) (Foco em performance e baixa latência).
+- **Linguagem:** TypeScript (Configuração de tipagem estrita).
+- **ORM/Query Builder:** [Adonis Lucid](https://lucid.adonisjs.com/) (Integração robusta com PostgreSQL).
+- **Integração Google:** Google Apps Script (Interface para Google Sheets API).
+- **Linter & Formatter:** [Biome](https://biomejs.dev/) (Substituto ultra-rápido para ESLint/Prettier).
+- **Utilitários:** Axios (HTTP) e Luxon (Gestão de Timezones).
 
 ---
 
 ## 🏗️ Arquitetura do Projeto
 
-O projeto segue princípios de **Clean Code** e **SOLID**, organizado de forma modular para máxima escalabilidade:
+O projeto adota princípios de **Clean Code** e **SOLID**, com processamento sequencial e otimização de memória:
 
-- `src/config/`: Gerenciamento de Variáveis de Ambiente e Logging estruturado.
-- `src/core/contracts/`: Interfaces e Contratos que definem a tipagem central do sistema.
+- `src/config/`: Centralização de variáveis de ambiente e logger estruturado.
+- `src/core/contracts/`: Interfaces e tipos que garantem a segurança em todo o sistema.
 - `src/modules/`:
-  - `config-tabs/`: Carregamento dinâmico de configurações da planilha.
-  - `scheduler/`: Lógica de controle de frequências (M1, M5, H1, D1).
-  - `reports/`: Execução de SQL e processamento de dados.
-- `src/providers/`: Clientes de integração (Google Bridge API).
-- `src/engine.ts`: Orquestrador central do ciclo de sincronização.
+  - `config-tabs/`: Carregamento e sanitização de dados da planilha de configuração.
+  - `scheduler/`: Gerenciador de frequências (Mensal, Semanal, Diário, Horário).
+  - `reports/`: O core do processamento, utilizando **Sequential Batching** para evitar estouro de memória.
+- `src/providers/`: Clientes de integração externos (Google Bridge).
+- `src/database.ts`: Implementação de **Streaming via Cursor SQL** para busca eficiente de grandes volumes de dados.
 
 ---
 
 ## 🚀 Pré-requisitos e Instalação
 
 ### Pré-requisitos
-
-- [Bun](https://bun.sh) instalado localmente.
-- Instância do PostgreSQL acessível.
-- Planilha no Google Sheets e uma URL de Web App do Google Apps Script (Siga as instruções dentro de [`./google-apps-script/Code.gs`](./google-apps-script/Code.gs)).
+- [Bun](https://bun.sh) instalado.
+- Banco de Dados PostgreSQL ativo.
+- Uma Planilha de Destino no Google Sheets.
+- Deploy do Google Apps Script (veja o código em [`./google-apps-script/Code.gs`](./google-apps-script/Code.gs)).
 
 ### Instalação e Configuração
 
 1. **Clone o repositório:**
-
    ```bash
    git clone <repo-url>
    cd query-bridge-core
    ```
 
 2. **Instale as dependências:**
-
    ```bash
    bun install
    ```
 
-3. **Configure as Variáveis de Ambiente:**
-
-   Crie um arquivo `.env` baseado no `.env.example`:
-
+3. **Configure o ambiente (.env):**
+   Crie um arquivo `.env` com as seguintes chaves:
    ```env
    DATABASE_URL=postgres://user:pass@host:5432/db
    SPREADSHEET_ID=seu_id_da_planilha
-   APPS_SCRIPT_URL=sua_url_do_google_script
-   BRIDGE_SECRET=sua_chave_secreta
+   APPS_SCRIPT_URL=url_do_web_app_gerado
+   BRIDGE_SECRET=sua_chave_de_seguranca
    PORT=8080
    TZ=America/Sao_Paulo
    ```
 
-4. **Inicie o Setup da Planilha:**
-
-   Este comando criará as abas e cabeçalhos necessários no Google Sheets.
-
+4. **Inicialize a Estrutura:**
+   Execute o setup para criar as abas necessárias na planilha do Google:
    ```bash
    bun run setup
    ```
@@ -85,10 +80,10 @@ O projeto segue princípios de **Clean Code** e **SOLID**, organizado de forma m
 | Endpoint | Método | Descrição | Parâmetros |
 | :--- | :--- | :--- | :--- |
 | `/` | `GET` | Health Check do serviço. | N/A |
-| `/run` | `GET` | Aciona o ciclo de sincronização. | `?force=true` (opcional: ignora agendamento) |
+| `/run` | `GET` | Aciona o ciclo de sincronização. | `?force=true` (Ignora o agendamento) |
+| `/setup` | `GET` | Inicializa as abas de configuração na planilha. | N/A |
 
-### Exemplo de Request
-
+### Exemplo de Sincronização Forçada
 ```bash
 curl "http://localhost:8080/run?force=true"
 ```
@@ -97,12 +92,10 @@ curl "http://localhost:8080/run?force=true"
 
 ## 📜 Padrões de Código
 
-Este projeto impõe diretrizes rigorosas para manter a qualidade:
-
-- **TypeScript Estrito:** Zero uso de `any`.
-- **Early Return:** Evita aninhamento complexo de `if/else`.
-- **Service Layer:** As regras de negócio estão isoladas do servidor HTTP.
-- **Imutabilidade:** Preferência por métodos funcionais (`map`, `filter`, `reduce`).
+- **TypeScript Estrito:** Proibido o uso de `any`; todas as interfaces são detalhadas em `src/core/contracts/`.
+- **Early Return:** Prática padrão para reduzir aninhamentos e aumentar legibilidade.
+- **Service Layer:** Regras de negócio isoladas em módulos específicos.
+- **Escalabilidade (Streaming):** Busca de dados limitada por lotes (`BATCH_SIZE`) via cursores SQL nativos.
 
 ---
 
@@ -110,35 +103,33 @@ Este projeto impõe diretrizes rigorosas para manter a qualidade:
 
 | Comando | Descrição |
 | :--- | :--- |
-| `bun run dev` | Inicia o servidor em modo desenvolvimento (com hot-reload). |
-| `bun run start` | Inicia o servidor em modo produção (compilado). |
-| `bun run setup` | Inicializa a estrutura da planilha no Google Sheets. |
-| `bun run lint` | Executa o linter Biome para checagem de código. |
-| `bun run lint:fix` | Corrige problemas automáticos de linting e formatação. |
+| `bun run dev` | Inicia o servidor com hot-reload (Modo Desenvolvimento). |
+| `bun run setup` | Executa o script de inicialização da planilha. |
+| `bun run start` | Inicia o motor em ambiente de produção. |
+| `bun run lint` | Executa análise estática via Biome. |
+| `bun run lint:fix` | Aplica correções automáticas de estilo e erros comuns. |
+| `bun run typecheck` | Valida a integridade dos tipos TypeScript. |
 
 ---
 
-## 🐳 Docker (Cloud Run Ready)
+## 🐳 Docker & Deploy
 
-O projeto está pronto para deploy via Docker:
+O projeto conta com um **Dockerfile** multi-stage otimizado para **Google Cloud Run**:
 
 ```bash
+# Build & Local Run
 docker build -t query-bridge-core .
-```
-
-```bash
 docker run -p 8080:8080 --env-file .env query-bridge-core
 ```
-
-*O Dockerfile já inclui configuração nativa de Timezone para o horário de Brasília.*
 
 ---
 
 ## 🤝 Contribuição
 
-1. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`).
-2. Siga os padrões de commit e código do projeto.
-3. Abra um Pull Request detalhando as mudanças.
+1. Realize o Fork do projeto.
+2. Crie sua branch (`git checkout -b feature/minha-feature`).
+3. Siga os padrões de Código Limpo informados no `README`.
+4. Envie o Pull Request detalhando sua implementação.
 
 ---
-**Desenvolvido com foco em performance e simplicidade.** 🚀
+**Desenvolvido para máxima performance em sincronização SQL-to-Sheet.** 🚀

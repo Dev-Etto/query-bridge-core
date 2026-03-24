@@ -42,10 +42,8 @@ export const ConfigLoader = {
         const getVal = (i: number, defaultVal = '') => {
           let val = i !== -1 ? String(row[i] || '').trim() : '';
 
-          // Remove aspas externas se existirem
           val = val.replace(/^"|"$/g, '').trim();
 
-          // Trata aspas duplas escapadas ("") que vêm de planilhas/CSV
           val = val.replace(/""/g, '"');
 
           return val || defaultVal;

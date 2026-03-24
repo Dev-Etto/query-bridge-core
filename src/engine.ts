@@ -32,7 +32,6 @@ export async function runQueryBridge(force = false) {
     return;
   }
 
-  // Processamento Sequencial (para evitar OOM em relatórios grandes como Candidatos e Hunter)
   const total = jobsToRun.length;
   let finished = 0;
   let failed = 0;

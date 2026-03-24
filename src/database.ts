@@ -75,7 +75,7 @@ export const db = new Database(
  */
 export async function executeRawQuery<T = Record<string, unknown>>(query: string): Promise<T[]> {
   try {
-    const result = await db.rawQuery(query).timeout(20000, { cancel: true });
+    const result = await db.rawQuery(query).timeout(120000, { cancel: true });
     return result.rows || result;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
@@ -83,7 +83,7 @@ export async function executeRawQuery<T = Record<string, unknown>>(query: string
 
     if (code === 'ETIMEDOUT') {
       logger.error(
-        `⌛ [Database Timeout] A query excedeu 20s e foi cancelada: ${query.substring(0, 100)}...`
+        `⌛ [Database Timeout] A query excedeu 120s e foi cancelada: ${query.substring(0, 100)}...`
       );
       throw new Error('A consulta ao banco de dados demorou demais e foi interrompida.');
     }

@@ -40,8 +40,15 @@ export const ConfigLoader = {
       .slice(1)
       .map((row: SheetValue[], index) => {
         const getVal = (i: number, defaultVal = '') => {
-          const val = i !== -1 ? String(row[i] || '').trim() : '';
-          return val.replace(/^"|"$/g, '').trim() || defaultVal;
+          let val = i !== -1 ? String(row[i] || '').trim() : '';
+
+          // Remove aspas externas se existirem
+          val = val.replace(/^"|"$/g, '').trim();
+
+          // Trata aspas duplas escapadas ("") que vêm de planilhas/CSV
+          val = val.replace(/""/g, '"');
+
+          return val || defaultVal;
         };
 
         const jobName = getVal(idx.targetTab, `Linha ${index + 2}`);

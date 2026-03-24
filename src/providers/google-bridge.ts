@@ -5,7 +5,7 @@ import { logger } from '../config/logger';
 export type SheetValue = string | number | boolean | null;
 
 export interface BridgeRequest {
-  action: 'GET_VALUES' | 'UPDATE_VALUES' | 'SETUP';
+  action: 'GET_VALUES' | 'UPDATE_VALUES' | 'APPEND_VALUES' | 'SETUP';
   spreadsheetId: string;
   secret?: string;
   tab?: string;
@@ -76,9 +76,14 @@ export class GoogleBridgeClient {
     return response.data || [];
   }
 
-  public async updateValues(tab: string, range: string, values: SheetValue[][]): Promise<void> {
+  public async updateValues(
+    tab: string,
+    range: string,
+    values: SheetValue[][],
+    isAppend = false
+  ): Promise<void> {
     const response = await this.request({
-      action: 'UPDATE_VALUES',
+      action: isAppend ? 'APPEND_VALUES' : 'UPDATE_VALUES',
       spreadsheetId: env.SPREADSHEET_ID,
       tab,
       range: range || 'A1',
